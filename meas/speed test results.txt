@@ -1,0 +1,7 @@
+letture:  10000
+media:    3.800 ms
+min:      2.677 ms
+max:      7.783 ms
+frequenza: 263 letture/s
+
+
