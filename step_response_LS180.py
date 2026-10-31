@@ -15,8 +15,6 @@ stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 f = open(f"step_response_LS180_{stamp}.csv", "w")
 f.write("start_y,time,actual_y\n")
 
-t_start = time.perf_counter()
-
 # little helper functions
 def move_x_axis(plc, target_x):
     plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
