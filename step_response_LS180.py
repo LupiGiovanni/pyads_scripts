@@ -30,7 +30,8 @@ def wait_for_movement_done(plc):
     while state != 0:
         if state == 3:
             print("ERROR")
-            close_all()
+            f.close()
+            plc.close()
             sys.exit(1)
         time.sleep(0.2)
         state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
@@ -43,7 +44,7 @@ def step_and_record(plc, start_y, step_mm):
         f.write(f"{start_y},{time.perf_counter() - t0},{actual_y}\n")
 
 # setting velocity
-plc.write_by_name("MAIN.velocity", 10.0, pyads.PLCTYPE_LREAL)
+plc.write_by_name("MAIN.velocity", 4.0, pyads.PLCTYPE_LREAL)
 
 # setting x axis to mid-range position
 move_x_axis(plc, 300.0)
