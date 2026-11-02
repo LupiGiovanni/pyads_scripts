@@ -13,7 +13,7 @@ plc.open()
 stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 f = open(f"step_response_LS270_{stamp}.csv", "w")
-f.write("start_x,time,actual_x\n")
+f.write("start_x,time,set_x,actual_x,following_error\n")
 
 # little helper functions
 def move_x_axis(plc, target_x):
@@ -40,8 +40,10 @@ def step_and_record(plc, start_x, step_mm):
     move_x_axis(plc, start_x + step_mm)
     t0 = time.perf_counter()
     while time.perf_counter() - t0 < 4.0:
+        set_x = plc.read_by_name("MAIN.axis_x.NcToPlc.SetPos", pyads.PLCTYPE_LREAL)
         actual_x = plc.read_by_name("MAIN.axis_x.NcToPlc.ActPos", pyads.PLCTYPE_LREAL)
-        f.write(f"{start_x},{time.perf_counter() - t0},{actual_x}\n")
+        following_error = plc.read_by_name("MAIN.axis_x.NcToPlc.PosDiff", pyads.PLCTYPE_LREAL)
+        f.write(f"{start_x},{time.perf_counter() - t0},{set_x},{actual_x},{following_error}\n")
 
 # setting velocity
 plc.write_by_name("MAIN.velocity", 4, pyads.PLCTYPE_LREAL)
