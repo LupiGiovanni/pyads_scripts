@@ -30,7 +30,8 @@ def wait_for_movement_done(plc):
     while state != 0:
         if state == 3:
             print("ERROR")
-            close_all()
+            f.close()
+            plc.close()
             sys.exit(1)
         time.sleep(0.2)
         state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
