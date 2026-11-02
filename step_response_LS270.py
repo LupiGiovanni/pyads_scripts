@@ -44,14 +44,14 @@ def step_and_record(plc, start_x, step_mm):
         f.write(f"{start_x},{time.perf_counter() - t0},{actual_x}\n")
 
 # setting velocity
-plc.write_by_name("MAIN.velocity", 10.0, pyads.PLCTYPE_LREAL)
+plc.write_by_name("MAIN.velocity", 4, pyads.PLCTYPE_LREAL)
 
 # setting y axis to mid-range position
 move_y_axis(plc, 150.0)
 wait_for_movement_done(plc)
 
 positions = [100.0, 300.0, 500.0]
-step_size = 10.0  # mm
+step_size = 1.0  # mm
 
 for pos in positions:
     move_x_axis(plc, pos)
