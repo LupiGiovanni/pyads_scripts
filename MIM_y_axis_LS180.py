@@ -61,7 +61,7 @@ move_x_axis(plc, target_x)
 wait_for_movement_done(plc)
 
 # positioning and measurements with y axis
-positions = [50.0, 100.0, 150.0, 200.0, 250.0]
+positions = [100.0, 150.0, 200.0]
 step_size = 0.0003  # 300 nanometers
 
 for pos in positions:

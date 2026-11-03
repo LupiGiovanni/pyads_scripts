@@ -13,7 +13,7 @@ plc.open()
 stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 f = open(f"step_response_LS180_{stamp}.csv", "w")
-f.write("start_y,time,actual_y\n")
+f.write("start_y,time,set_y,actual_y,following_error\n")
 
 # little helper functions
 def move_x_axis(plc, target_x):
@@ -40,11 +40,13 @@ def step_and_record(plc, start_y, step_mm):
     move_y_axis(plc, start_y + step_mm)
     t0 = time.perf_counter()
     while time.perf_counter() - t0 < 4.0:
+        set_y = plc.read_by_name("MAIN.axis_y.NcToPlc.SetPos", pyads.PLCTYPE_LREAL)
         actual_y = plc.read_by_name("MAIN.axis_y.NcToPlc.ActPos", pyads.PLCTYPE_LREAL)
-        f.write(f"{start_y},{time.perf_counter() - t0},{actual_y}\n")
+        following_error = plc.read_by_name("MAIN.axis_y.NcToPlc.PosDiff", pyads.PLCTYPE_LREAL)
+        f.write(f"{start_y},{time.perf_counter() - t0},{set_y},{actual_y},{following_error}\n")
 
 # setting velocity
-plc.write_by_name("MAIN.velocity", 4.0, pyads.PLCTYPE_LREAL)
+plc.write_by_name("MAIN.velocity", 10.0, pyads.PLCTYPE_LREAL)
 
 # setting x axis to mid-range position
 move_x_axis(plc, 300.0)
