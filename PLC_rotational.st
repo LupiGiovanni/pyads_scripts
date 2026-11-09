@@ -1,8 +1,8 @@
 PROGRAM MAIN
 VAR
-    axis : AXIS_REF;
-    power : MC_Power;
-    move : MC_MoveRelative;
+    axis_rot : AXIS_REF;
+    power_rot : MC_Power;
+    move_rot : MC_MoveRelative;
 
     distance : LREAL := 0;
     velocity : LREAL := 1.0;
@@ -13,17 +13,17 @@ END_VAR
 
 //-------------------------------------------------------
 
-axis.ReadStatus();
+axis_rot.ReadStatus();
 
-power(
-    Axis            := axis,
+power_rot(
+    Axis            := axis_rot,
     Enable          := TRUE,
     Enable_Positive := TRUE,
     Enable_Negative := TRUE,
     Override        := 100);
 
-move(
-    Axis := axis,
+move_rot(
+    Axis := axis_rot,
     Execute := (state=1) AND power.Status,
     Distance := distance,
     Velocity := velocity);
