@@ -13,7 +13,7 @@ tempi = []
 
 for i in range(n):
     t0 = time.perf_counter()
-    plc.read_by_name("MAIN.axis_x.NcToPlc.ActPos", pyads.PLCTYPE_LREAL)
+    plc.read_by_name("MAIN.axis_rot.NcToPlc.ActPos", pyads.PLCTYPE_LREAL)
     tempi.append(time.perf_counter() - t0)
 
 plc.close()

@@ -35,7 +35,7 @@ def step_and_record(plc, step_degrees):
     start_pos = plc.read_by_name("MAIN.axis_rot.NcToPlc.ActPos", pyads.PLCTYPE_LREAL)
     move_distance(plc, step_degrees)
     t0 = time.perf_counter()
-    while time.perf_counter() - t0 < 5.0:
+    while time.perf_counter() - t0 < 3.0:
         set_pos = plc.read_by_name("MAIN.axis_rot.NcToPlc.SetPos", pyads.PLCTYPE_LREAL)
         actual_pos = plc.read_by_name("MAIN.axis_rot.NcToPlc.ActPos", pyads.PLCTYPE_LREAL)
         following_error = plc.read_by_name("MAIN.axis_rot.NcToPlc.PosDiff", pyads.PLCTYPE_LREAL)
@@ -46,8 +46,8 @@ plc.write_by_name("MAIN.velocity", 5.0, pyads.PLCTYPE_LREAL)
 
 step_size = 5 # degrees
 
-for i in range(1):
-    time.sleep(5)
+for i in range(30):
+    time.sleep(3)
     step_and_record(plc, step_size)
     wait_for_movement_done(plc)
     
