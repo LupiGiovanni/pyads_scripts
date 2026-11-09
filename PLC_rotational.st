@@ -24,7 +24,7 @@ power_rot(
 
 move_rot(
     Axis := axis_rot,
-    Execute := (state=1) AND power.Status,
+    Execute := (state=1) AND power_rot.Status,
     Distance := distance,
     Velocity := velocity);
 
