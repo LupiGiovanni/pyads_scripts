@@ -35,9 +35,9 @@ CASE state OF
         END_IF
 
     1: // move
-        IF move.Done THEN
+        IF move_rot.Done THEN
             state := 2;
-        ELSIF move.Error OR move.CommandAborted THEN
+        ELSIF move_rot.Error OR move_rot.CommandAborted THEN
             state := 3;
         END_IF
 
