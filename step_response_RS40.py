@@ -12,7 +12,7 @@ plc.open()
 
 stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
-f = open(f"step_response_rotational_{stamp}.csv", "w")
+f = open(f"step_response_RS40_{stamp}.csv", "w")
 f.write("start_pos,time,set_pos,actual_pos,following_error\n")
 
 def move_distance (plc, distance):
