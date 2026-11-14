@@ -2,7 +2,7 @@ import time
 import struct
 from datetime import datetime
 import pyads
-import numpy
+import sys
 
 PLC_NET_ID = "5.36.211.100.1.1"
 PLC_IP = "192.168.34.130"
@@ -14,8 +14,6 @@ plc = pyads.Connection(PLC_NET_ID, 851, PLC_IP)
 nc = pyads.Connection(PLC_NET_ID, 500, PLC_IP)
 plc.open()
 nc.open()
-
-
 
 axis_id = plc.read_by_name("MAIN.axis_rot.NcToPlc.AxisId", pyads.PLCTYPE_UDINT)
 print("ID asse:", axis_id)
@@ -40,28 +38,40 @@ def move_distance (plc, distance):
     plc.write_by_name("MAIN.distance", distance, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
 
+def wait_for_movement_done(plc):
+    time.sleep(0.2)
+    state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
+    while state != 0:
+        if state == 3:
+            print("ERROR")
+            f.close()
+            plc.close()
+            sys.exit(1)
+        time.sleep(0.2)
+        state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
+
 try:
     with open(filename, "w") as f:
         f.write("output_percent,actual_velo\n")
 
-        for i in range (1,4):
-            for percentage in numpy.arange(1, 101):
-                mypack = struct.pack("<IId", TYPE, 0, float(percentage))
-                write(AXIS, START, mypack)
+        plc.write_by_name("MAIN.velocity", 5.0, pyads.PLCTYPE_LREAL)
+        move_distance(plc, 60.0)
+        wait_for_movement_done(plc)
 
-                time.sleep(SETTLE)
+        for percentage in range(1, 101):
+            mypack = struct.pack("<IId", TYPE, 0, float(percentage))
+            write(AXIS, START, mypack)
 
-                percentage_val = nc.read(DRIVE, PERCENTAGE_READ, pyads.PLCTYPE_LREAL) * 100
-                actual_velo_val = plc.read_by_name("MAIN.axis_rot.NcToPlc.ActVelo", pyads.PLCTYPE_LREAL)
-                print("Output:", percentage_val, "%  Actual velocity:", actual_velo_val)
+            time.sleep(SETTLE)
 
-                f.write(f"{i},{percentage_val},{actual_velo_val}\n")
+            percentage_val = nc.read(DRIVE, PERCENTAGE_READ, pyads.PLCTYPE_LREAL) * 100
+            actual_velo_val = plc.read_by_name("MAIN.axis_rot.NcToPlc.ActVelo", pyads.PLCTYPE_LREAL)
+            print("Output:", percentage_val, "%  Actual velocity:", actual_velo_val)
 
-                write(AXIS, STOP, b"")   # nessun dato
-                time.sleep(STOP_WAIT)
+            f.write(f"{percentage_val},{actual_velo_val}\n")
 
-            plc.write_by_name("MAIN.velocity", 5.0, pyads.PLCTYPE_LREAL)
-            move_distance(plc, 90.0)
+            write(AXIS, STOP, b"")   # nessun dato
+            time.sleep(STOP_WAIT)
 
 finally:
     write(AXIS, STOP, b"")   # nessun dato
