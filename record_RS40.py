@@ -7,6 +7,10 @@ plc_netid = "5.36.211.100.1.1"
 plc_port = 851
 plc_ip = "192.168.34.130"
 
+if len(sys.argv) < 2:
+    print("uso: python record_RS40.py <durata_in_secondi>")
+    sys.exit(1)
+
 plc = pyads.Connection(plc_netid, plc_port, plc_ip)
 plc.open()
 
@@ -18,7 +22,7 @@ f.write("time,set_pos,actual_pos,following_error\n")
 
 def record ():
     t0 = time.perf_counter()
-    while time.perf_counter() - t0 < float(sys.argv[1]):
+    while time.perf_counter() - t0 < duration:
         t = time.perf_counter() - t0
         set_pos = plc.read_by_name("MAIN.axis_rot.NcToPlc.SetPos", pyads.PLCTYPE_LREAL)
         actual_pos = plc.read_by_name("MAIN.axis_rot.NcToPlc.ActPos", pyads.PLCTYPE_LREAL)
@@ -26,3 +30,5 @@ def record ():
         f.write(f"{t},{set_pos},{actual_pos},{following_error}\n")
 
 record()
+f.close()
+plc.close()
