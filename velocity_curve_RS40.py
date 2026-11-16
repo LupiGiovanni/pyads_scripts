@@ -55,7 +55,7 @@ try:
         f.write("output_percent,actual_velo\n")
 
         plc.write_by_name("MAIN.velocity", 5.0, pyads.PLCTYPE_LREAL)
-        move_distance(plc, 60.0)
+        move_distance(plc, 3.0)
         wait_for_movement_done(plc)
 
         for percentage in range(1, 101):

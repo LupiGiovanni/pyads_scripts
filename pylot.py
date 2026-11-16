@@ -1,6 +1,7 @@
 import pyads
 import time
 
+
 X_MIN = 30.0
 X_MAX = 570.0
 Y_MIN = 30.0
@@ -8,6 +9,29 @@ Y_MAX = 270.0
 VELOCITY_MAX = 10.0
 MOVE_TIMEOUT = 120.0
 
+
+# Example of use:
+# 
+# import pyads
+# import pylot
+#
+# plc_netid = "5.36.211.100.1.1"
+# plc_port = 851
+# plc_ip = "192.168.34.130"
+# 
+# plc = pyads.Connection(plc_netid, plc_port, plc_ip)
+# plc.open()
+#
+# try:
+#     set_velocity(plc, 8.0)
+#     move_home_x_axis(plc)
+#     move_home_y_axis(plc)
+#     [...]
+#
+# finally:
+#     plc.close()
+#
+#
 #         300-- +-------------------------------------------------------------------+
 #               |                                                                   |
 #               |                                                                   |
@@ -63,6 +87,18 @@ def move_y_axis(plc, target_y):
     wait_for_movement_done(plc)
 
 
+def move_xy_axes(plc, target_x, target_y):
+    if not (X_MIN <= target_x <= X_MAX):
+        raise MotionError(f"move_xy_axes: target_x = {target_x} fuori range [{X_MIN}, {X_MAX}]")
+    if not (Y_MIN <= target_y <= Y_MAX):
+        raise MotionError(f"move_xy_axes: target_y = {target_y} fuori range [{Y_MIN}, {Y_MAX}]")
+
+    plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
+    plc.write_by_name("MAIN.target_y", target_y, pyads.PLCTYPE_LREAL)
+    plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+    wait_for_movement_done(plc)
+    
+
 def move_rotational_axis(plc, distance):
     plc.write_by_name("MAIN.distance", distance, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
@@ -90,16 +126,3 @@ def get_velocity(plc):
 
 def write_into_memory(connection, index_group, index_offset, data):
     connection.write(index_group, index_offset, data, pyads.PLCTYPE_BYTE * len(data))
-
-
-# Uso nello script di test:
-#
-# plc = pyads.Connection(PLC_NET_ID, 851, PLC_IP)
-# plc.open()
-# try:
-#     set_velocity(plc, 8.0)
-#     move_home_x_axis(plc)
-#     move_home_y_axis(plc)
-#     ...
-# finally:
-#     plc.close()
