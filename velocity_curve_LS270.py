@@ -38,7 +38,8 @@ try:
         pylot.set_velocity(plc, 8.0)
         pylot.move_home_xy_axes(plc)
 
-        for percentage in range(1, 101):
+        # WARNING! DO NOT SET A PERCENTAGE VALUE > 25
+        for percentage in range(1, 21):
             mypack = struct.pack("<IId", TYPE, 0, float(percentage))
             pylot.write_into_memory(nc, AXIS, START, mypack)
             time.sleep(SETTLE_TIME)

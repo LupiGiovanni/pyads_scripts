@@ -32,27 +32,30 @@ MOVE_TIMEOUT = 120.0
 #     plc.close()
 #
 #
-#         300-- +-------------------------------------------------------------------+
-#               |                                                                   |
-#               |                                                                   |
-#         270-- |     +-------------------------------------------------------+     |
-#               |     |                                                       |     |
-#               |     |                                                       |     |
-# Y (mm)        |     |                    RANGE ABILITATO                    |     |
-#               |     |                                                       |     |
-#               |     |                                                       |     |
-#          30-- |     +-------------------------------------------------------+     |
-#               |                                                                   |
-#               |                                                                   |
-#           0-- +-------------------------------------------------------------------+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#               |     |                                                       |     |
-#               0    30                                                      570   600
 #
-#                                              X (mm)
+#           300--  +-------------------------------------------------------------------+
+#                  |                                                                   |
+#                  |                                                                   |
+#           270--  |     +-------------------------------------------------------+     |
+#                  |     | - - - - - - - - - - - - - - - - - - - - - - - - - - - |     |
+#                  |     | - - - - - - - - - - - - - - - - - - - - - - - - - - - |     |
+# y (mm)           |     | - - - - - - - - - RANGE ABILITATO - - - - - - - - - - |     |
+#                  |     | - - - - - - - - - - - - - - - - - - - - - - - - - - - |     |
+#                  |     | - - - - - - - - - - - - - - - - - - - - - - - - - - - |     |
+#            30--  |     +-------------------------------------------------------+     |
+#                  |                                                                   |
+#                  |                                                                   |
+#             0--  +-------------------------------------------------------------------+
+#                   
+#                  |     |                                                       |     |
+#                  0    30                                                      570   600
+#
+#                                                x (mm)
 
 
-class MotionError(Exception):
+class MotionError(Exception):                    
     pass
 
 
@@ -75,6 +78,7 @@ def move_x_axis(plc, target_x):
     
     plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+
 
 def move_wait_x_axis(plc, target_x):
     move_x_axis(plc, target_x)
@@ -103,6 +107,7 @@ def move_xy_axes(plc, target_x, target_y):
     plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.target_y", target_y, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+
 
 def move_wait_xy_axes(plc, target_x, target_y):
     move_xy_axes(plc, target_x, target_y)
@@ -143,6 +148,7 @@ def set_velocity(plc, value):
 
 def get_velocity(plc):
     return plc.read_by_name("MAIN.velocity", pyads.PLCTYPE_LREAL)
+
 
 # USE WITH CAUTION!
 def write_into_memory(connection, index_group, index_offset, data):
