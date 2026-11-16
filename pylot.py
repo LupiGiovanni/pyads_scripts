@@ -72,18 +72,25 @@ def wait_for_movement_done(plc, timeout=MOVE_TIMEOUT):
 def move_x_axis(plc, target_x):
     if not (X_MIN <= target_x <= X_MAX):
         raise MotionError(f"move_x_axis: target_x = {target_x} fuori range [{X_MIN}, {X_MAX}]")
-
+    
     plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+
+def move_wait_x_axis(plc, target_x):
+    move_x_axis(plc, target_x)
     wait_for_movement_done(plc)
 
 
 def move_y_axis(plc, target_y):
     if not (Y_MIN <= target_y <= Y_MAX):
         raise MotionError(f"move_y_axis: target_y = {target_y} fuori range [{Y_MIN}, {Y_MAX}]")
-
+    
     plc.write_by_name("MAIN.target_y", target_y, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+
+
+def move_wait_y_axis(plc, target_y):
+    move_y_axis(plc, target_y)
     wait_for_movement_done(plc)
 
 
@@ -92,25 +99,39 @@ def move_xy_axes(plc, target_x, target_y):
         raise MotionError(f"move_xy_axes: target_x = {target_x} fuori range [{X_MIN}, {X_MAX}]")
     if not (Y_MIN <= target_y <= Y_MAX):
         raise MotionError(f"move_xy_axes: target_y = {target_y} fuori range [{Y_MIN}, {Y_MAX}]")
-
+    
     plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.target_y", target_y, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+
+def move_wait_xy_axes(plc, target_x, target_y):
+    move_xy_axes(plc, target_x, target_y)
     wait_for_movement_done(plc)
-    
+
 
 def move_rotational_axis(plc, distance):
     plc.write_by_name("MAIN.distance", distance, pyads.PLCTYPE_LREAL)
     plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+
+
+def move_wait_rotational_axis(plc, distance):
+    move_rotational_axis(plc, distance)
     wait_for_movement_done(plc)
 
 
 def move_home_x_axis(plc):
-    move_x_axis(plc, 300.0)
+    move_wait_x_axis(plc, 300.0)
 
 
 def move_home_y_axis(plc):
-    move_y_axis(plc, 150.0)
+    move_wait_y_axis(plc, 150.0)
+
+
+def move_home_xy_axes(plc):
+    plc.write_by_name("MAIN.target_x", 300.0, pyads.PLCTYPE_LREAL)
+    plc.write_by_name("MAIN.target_y", 150.0, pyads.PLCTYPE_LREAL)
+    plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
+    wait_for_movement_done(plc)
 
 
 def set_velocity(plc, value):
@@ -123,6 +144,6 @@ def set_velocity(plc, value):
 def get_velocity(plc):
     return plc.read_by_name("MAIN.velocity", pyads.PLCTYPE_LREAL)
 
-
+# USE WITH CAUTION!
 def write_into_memory(connection, index_group, index_offset, data):
     connection.write(index_group, index_offset, data, pyads.PLCTYPE_BYTE * len(data))

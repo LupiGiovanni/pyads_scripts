@@ -3,12 +3,12 @@ import struct
 from datetime import datetime
 import pyads
 import sys
+import pylot
 
 PLC_NET_ID = "5.36.211.100.1.1"
 PLC_IP = "192.168.34.130"
 
-SETTLE = 2.0      # secondi di attesa a ogni percentuale prima di leggere
-STOP_WAIT = 2.0   # secondi di attesa dopo lo stop, per ripartire da fermo
+SETTLE_TIME = 2.0      # secondi di attesa a ogni percentuale prima di leggere
 
 plc = pyads.Connection(PLC_NET_ID, 851, PLC_IP)
 nc = pyads.Connection(PLC_NET_ID, 500, PLC_IP)
@@ -31,43 +31,17 @@ TYPE = 1   # 1 = percento, 2 = velocita'
 
 filename = "velocity_curve_LS270_" + datetime.now().strftime("%Y-%m-%d_%H-%M") + ".csv"
 
-def write(index_group, index_offset, dati):
-    nc.write(index_group, index_offset, dati, pyads.PLCTYPE_BYTE * len(dati))
-
-def move_x_axis(plc, target_x):
-    plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
-    plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
-
-def move_y_axis(plc, target_y):
-    plc.write_by_name("MAIN.target_y", target_y, pyads.PLCTYPE_LREAL)
-    plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
-
-def wait_for_movement_done(plc):
-    time.sleep(0.2)
-    state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
-    while state != 0:
-        if state == 3:
-            print("ERROR")
-            f.close()
-            plc.close()
-            sys.exit(1)
-        time.sleep(0.2)
-        state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
-
 try:
     with open(filename, "w") as f:
         f.write("output_percent,actual_velo\n")
 
-        plc.write_by_name("MAIN.velocity", 8.0, pyads.PLCTYPE_LREAL)
-        move_x_axis(plc, 300.0)
-        move_y_axis(plc, 150.0)
-        wait_for_movement_done(plc)
+        pylot.set_velocity(plc, 8.0)
+        pylot.move_home_xy_axes(plc)
 
         for percentage in range(1, 101):
             mypack = struct.pack("<IId", TYPE, 0, float(percentage))
-            write(AXIS, START, mypack)
-
-            time.sleep(SETTLE)
+            pylot.write_into_memory(nc, AXIS, START, mypack)
+            time.sleep(SETTLE_TIME)
 
             percentage_val = nc.read(DRIVE, PERCENTAGE_READ, pyads.PLCTYPE_LREAL) * 100
             actual_velo_val = plc.read_by_name("MAIN.axis_x.NcToPlc.ActVelo", pyads.PLCTYPE_LREAL)
@@ -75,13 +49,12 @@ try:
 
             f.write(f"{percentage_val},{actual_velo_val}\n")
 
-            write(AXIS, STOP, b"")   # nessun dato
-            time.sleep(STOP_WAIT)
+            pylot.write_into_memory(nc, AXIS, STOP, b"")   # nessun dato
+            time.sleep(SETTLE_TIME)
 
-            move_x_axis(plc, 300)
-            wait_for_movement_done(plc)
+            pylot.move_home_x_axis(plc)
 
 finally:
-    write(AXIS, STOP, b"")   # nessun dato
+    pylot.write_into_memory(nc, AXIS, STOP, b"")   # nessun dato
     plc.close()
     nc.close()
