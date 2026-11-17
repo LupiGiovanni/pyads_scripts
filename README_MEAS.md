@@ -2,7 +2,7 @@
 
 Questo file descrive tutte le misure della cartella: cosa rappresenta ogni file, quando è stato registrato, con quale prova e con quali impostazioni. Le analisi sono nelle chat *GRAFICI MIM*, *GRAFICI STEP RESPONSE*, *GRAFICI ACCELEROMETRI* e *GRAFICI CURVE VELOCITÀ*; il riepilogo per giornata è nel documento *Log di laboratorio – chat GRAFICI*.
 
-I nomi sono stati cambiati il 14/11/2026 con lo schema `<sistema>_<prova>_<parametri>_<data>_<ora>.csv`. Data e ora sono quelle dell'avvio dello script. Il nome originale di ogni file è indicato nelle tabelle (colonna *Nome originale*), così si ritrovano i riferimenti nelle chat.
+I nomi sono stati cambiati il 14/11/2026 (quelle del 16/11 lo stesso giorno) con lo schema `<sistema>_<prova>_<parametri>_<data>_<ora>.csv`. Data e ora sono quelle dell'avvio dello script. Il nome originale di ogni file è indicato nelle tabelle (colonna *Nome originale*), così si ritrovano i riferimenti nelle chat.
 
 ---
 
@@ -46,6 +46,10 @@ Comunicazione: PLC Beckhoff via pyads (AMS NetId 5.36.211.100.1.1, porta 851; po
 | `ciclo1ms`, `ciclo2ms` | tempo di ciclo del task NC SAF |
 | `CONFIG-FINALE` | configurazione dell'RS40 impostata il 9/11 alle 17:08 (vedi §6) |
 | `paramCasuali` | parametri del regolatore non documentati (provvisori) |
+| `ripetizione` | stessa prova del file precedente, con gli stessi parametri |
+| `curva-velocita_anelloAperto` | curva di velocità con l'output del drive imposto direttamente in % (anello aperto) |
+| `output1-100pct`, `output1-36pct` | intervallo di output provato, in % |
+| `5gradini-GUI` | registrazione di 5 gradini comandati a mano dalla GUI di TwinCAT |
 
 **Colonne dei file**
 
@@ -57,10 +61,11 @@ Comunicazione: PLC Beckhoff via pyads (AMS NetId 5.36.211.100.1.1, porta 851; po
 | Temperature (`_temperature.csv`) | `time_s`, `clock`, `temp_motor`, `temp_ambient` | s dall'avvio, ora del giorno, **decimi di °C** (278 = 27,8 °C); 1 lettura al secondo |
 | Risposta al gradino, RS40 | `start_pos`, `time`, `set_pos`, `actual_pos`, `following_error` | gradi, s dal comando; campioni ogni circa 9 ms |
 | Registrazione RS40 | `time`, `set_pos`, `actual_pos`, `following_error` | s dall'avvio, gradi; campioni ogni circa 9 ms |
-| Curva di velocità RS40 | `output_percent`, `actual_velo` | % di output del drive, velocità reale in °/s (`ActVelo`) |
+| Registrazione slitte | `time`, `set_pos`, `actual_pos`, `following_error` | s dall'avvio, mm; campioni ogni circa 11 ms |
+| Curva di velocità | `output_percent`, `actual_velo` | % di output del drive, velocità reale (`ActVelo`) in °/s per l'RS40 e in mm/s per le slitte |
 | Accelerometri (`diag_…`) | `time`, `board_x`, `board_y`, `board_z`, `bench_z` | s, m/s²; 6 kHz |
 
-**Script** (cartella superiore): `MIM_x_axis_LS270.py` e `MIM_y_axis_LS180.py` (scalette), `cumulative_error.py` (errore accumulato), `step_response_LS270.py` e `step_response_LS180.py` (gradino slitte, con temperature), `step_response_RS40.py` (gradino RS40), `record_RS40.py` (registrazione libera), `velocity_curve_RS40.py` (curva di velocità), `diagonal_accel_test.py` (accelerometri), `speed_test.py` (velocità di lettura ADS).
+**Script** (cartella superiore): `MIM_LS270.py` e `MIM_LS180.py` (scalette), `cumulative_error_LS270_LS180.py` (errore accumulato), `step_response_LS270.py` e `step_response_LS180.py` (gradino slitte, con temperature), `step_response_RS40.py` (gradino RS40), `record_RS40.py` e `record_LS270.py` (registrazione libera), `velocity_curve_RS40.py` e `velocity_curve_LS270.py` (curva di velocità), `diagonal_accel_test_LS270_LS180.py` (accelerometri), `speed_test.py` (velocità di lettura ADS).
 
 ---
 
@@ -215,4 +220,25 @@ La curva di velocità è misurata in **anello aperto** con `velocity_curve_RS40.
 
 **File**: `diag_v<velocità>_x<partenza x>_y<partenza y>_2026-11-03_16-32.csv`, 52 file.
 
-Le due slitte si muovono insieme in diagonale per 5 s, con acquisizione di 2 s prima, 5 s di movimento e 2 s dopo (9 s in totale, 6 kHz). Velocità: 4,0–10,0 mm/s a passi di 0,5 mm/s (13 valori). Partenze: (x, y) = (100, 50), (200, 100), (300, 150), (400, 200) mm. Avvio della serie alle 16:32 del 3/11 (tutti i file hanno nel nome l'ora di avvio). Script `diagonal_accel_test.py`. Analisi dell'8–9/11 con `analisi_vibrazioni.py` e `fft_bande.py` (cartella `claudio/`).
+Le due slitte si muovono insieme in diagonale per 5 s, con acquisizione di 2 s prima, 5 s di movimento e 2 s dopo (9 s in totale, 6 kHz). Velocità: 4,0–10,0 mm/s a passi di 0,5 mm/s (13 valori). Partenze: (x, y) = (100, 50), (200, 100), (300, 150), (400, 200) mm. Avvio della serie alle 16:32 del 3/11 (tutti i file hanno nel nome l'ora di avvio). Script `diagonal_accel_test_LS270_LS180.py`. Analisi dell'8–9/11 con `analisi_vibrazioni.py` e `fft_bande.py` (cartella `claudio/`).
+
+## 9. Curve di velocità RS40 e LS270, registrazione LS270 (16/11)
+
+**RS40 – curva di velocità in anello aperto** con `velocity_curve_RS40.py`: prima un movimento di 3° a 5°/s, poi per ogni punto output imposto in % via ADS sulla porta 500 dell'NC, 2 s di assestamento, lettura di `ActVelo`, stop e 2 s di attesa per ripartire da fermo.
+
+| File | Nome originale | Ora | Cosa rappresenta |
+| --- | --- | --- | --- |
+| `RS40_curva-velocita_anelloAperto_output1-100pct_2026-11-16_09-18.csv` | `velocity_curve_RS40_2026-11-16_09-18.csv` | 09:18 | Output dall'1 % al 100 % a passi dell'1 % |
+| `RS40_curva-velocita_anelloAperto_output1-100pct_ripetizione_2026-11-16_09-27.csv` | `velocity_curve_RS40_2026-11-16_09-27.csv` | 09:27 | Ripetizione della prova delle 09:18, stessi parametri |
+
+**LS270 – registrazione di gradini dati dalla GUI** con `record_LS270.py`, che legge `SetPos`, `ActPos` e `PosDiff` dell'asse x per N secondi senza comandare movimenti; i gradini sono stati comandati a mano dalla GUI di TwinCAT.
+
+| File | Nome originale | Ora | Cosa rappresenta |
+| --- | --- | --- | --- |
+| `LS270_registrazione_5gradini-GUI_2026-11-16_11-07.csv` | `recorded_movement_LS270_2026-11-16_11-07.csv` | 11:07 | 20 s, 5 gradini da 300,000 mm: +284 µm, +316 µm, +304 µm, +1000 µm, +1000 µm (arrivo a 302,904 mm) |
+
+**LS270 – curva di velocità in anello aperto** con `velocity_curve_LS270.py`: per ogni punto output imposto in % via ADS sulla porta 500 dell'NC, 2 s di assestamento, lettura di `ActVelo` dall'encoder lineare, stop, 2 s di attesa e ritorno a casa (x = 300 mm) con `pylot`.
+
+| File | Nome originale | Ora | Cosa rappresenta |
+| --- | --- | --- | --- |
+| `LS270_curva-velocita_anelloAperto_output1-36pct_2026-11-16_13-42.csv` | `velocity_curve_LS270_2026-11-16_13-42.csv` | 13:42 | Output dall'1 % al 36 % a passi dell'1 % (prova fermata al 36 %) |
