@@ -2,7 +2,7 @@ import time
 import struct
 from datetime import datetime
 import pyads
-import sys
+import pylot
 
 PLC_NET_ID = "5.36.211.100.1.1"
 PLC_IP = "192.168.34.130"
@@ -20,7 +20,7 @@ print("ID asse:", axis_id)
 
 # Index group
 AXIS = 0x4200 + axis_id
-DRIVE = 0x7100 + axis_id 
+DRIVE = 0x7100 + axis_id
 
 # Index offset
 START = 0x26
@@ -31,36 +31,16 @@ TYPE = 1   # 1 = percento, 2 = velocita'
 
 filename = "velocity_curve_RS40_" + datetime.now().strftime("%Y-%m-%d_%H-%M") + ".csv"
 
-def write(index_group, index_offset, dati):
-    nc.write(index_group, index_offset, dati, pyads.PLCTYPE_BYTE * len(dati))
-
-def move_distance (plc, distance):
-    plc.write_by_name("MAIN.distance", distance, pyads.PLCTYPE_LREAL)
-    plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
-
-def wait_for_movement_done(plc):
-    time.sleep(0.2)
-    state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
-    while state != 0:
-        if state == 3:
-            print("ERROR")
-            f.close()
-            plc.close()
-            sys.exit(1)
-        time.sleep(0.2)
-        state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
-
 try:
     with open(filename, "w") as f:
         f.write("output_percent,actual_velo\n")
 
-        plc.write_by_name("MAIN.velocity", 5.0, pyads.PLCTYPE_LREAL)
-        move_distance(plc, 3.0)
-        wait_for_movement_done(plc)
+        pylot.set_velocity(plc, 5.0)
+        pylot.move_wait_rotational_axis(plc, 3.0)
 
         for percentage in range(1, 101):
             mypack = struct.pack("<IId", TYPE, 0, float(percentage))
-            write(AXIS, START, mypack)
+            pylot.write_into_memory(nc, AXIS, START, mypack)
 
             time.sleep(SETTLE)
 
@@ -70,10 +50,10 @@ try:
 
             f.write(f"{percentage_val},{actual_velo_val}\n")
 
-            write(AXIS, STOP, b"")   # nessun dato
+            pylot.write_into_memory(nc, AXIS, STOP, b"")   # nessun dato
             time.sleep(STOP_WAIT)
 
 finally:
-    write(AXIS, STOP, b"")   # nessun dato
+    pylot.write_into_memory(nc, AXIS, STOP, b"")   # nessun dato
     plc.close()
     nc.close()

@@ -3,6 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import pyads
+import pylot
 import nidaqmx
 from datetime import datetime
 from nidaqmx.constants import TaskMode, AccelUnits, AccelSensitivityUnits, AcquisitionType
@@ -66,66 +67,49 @@ wait_for_modules(chass)
 plc = pyads.Connection(plc_netid, plc_port, plc_ip)
 plc.open()
 
-# little helper functions
-def move_xy(plc, target_x, target_y):
-    plc.write_by_name("MAIN.target_x", target_x, pyads.PLCTYPE_LREAL)
-    plc.write_by_name("MAIN.target_y", target_y, pyads.PLCTYPE_LREAL)
-    plc.write_by_name("MAIN.execute", True, pyads.PLCTYPE_BOOL)
-
-def wait_for_movement_done(plc):
-    time.sleep(0.2)
-    state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
-    while state != 0:
-        if state == 3:
-            print("ERROR")
-            plc.close()
-            sys.exit(1)
-        time.sleep(0.2)
-        state = plc.read_by_name("MAIN.state", pyads.PLCTYPE_INT)
-
-with nidaqmx.Task() as task:
-    for i in range(3):
-        task.ai_channels.add_ai_accel_chan(f'{chass}Mod1/ai{i}', units=AccelUnits.METERS_PER_SECOND_SQUARED,
-                                           sensitivity=sens_board[i], sensitivity_units=AccelSensitivityUnits.MILLIVOLTS_PER_G,
+try:
+    with nidaqmx.Task() as task:
+        for i in range(3):
+            task.ai_channels.add_ai_accel_chan(f'{chass}Mod1/ai{i}', units=AccelUnits.METERS_PER_SECOND_SQUARED,
+                                               sensitivity=sens_board[i], sensitivity_units=AccelSensitivityUnits.MILLIVOLTS_PER_G,
+                                               min_val=-20, max_val=20)
+        task.ai_channels.add_ai_accel_chan(f'{chass}Mod2/ai0', units=AccelUnits.METERS_PER_SECOND_SQUARED,
+                                           sensitivity=sens_bench, sensitivity_units=AccelSensitivityUnits.MILLIVOLTS_PER_G,
                                            min_val=-20, max_val=20)
-    task.ai_channels.add_ai_accel_chan(f'{chass}Mod2/ai0', units=AccelUnits.METERS_PER_SECOND_SQUARED,
-                                       sensitivity=sens_bench, sensitivity_units=AccelSensitivityUnits.MILLIVOLTS_PER_G,
-                                       min_val=-20, max_val=20)
-    task.timing.cfg_samp_clk_timing(fs, sample_mode=AcquisitionType.FINITE, samps_per_chan=n_samples)
-    task.control(TaskMode.TASK_COMMIT)
-    print('Sensor under stabilization')
-    time.sleep(20)
+        task.timing.cfg_samp_clk_timing(fs, sample_mode=AcquisitionType.FINITE, samps_per_chan=n_samples)
+        task.control(TaskMode.TASK_COMMIT)
+        print('Sensor under stabilization')
+        time.sleep(20)
 
-    risultati = []
-    for velocity in velocities:
-        plc.write_by_name("MAIN.velocity", velocity, pyads.PLCTYPE_LREAL)
-        distance = velocity * move_time
+        risultati = []
+        for velocity in velocities:
+            pylot.set_velocity(plc, velocity)
+            distance = velocity * move_time
 
-        for x0, y0 in zip(x_starts, y_starts):
-            # positioning
-            move_xy(plc, x0, y0)
-            wait_for_movement_done(plc)
-            time.sleep(5)
+            for x0, y0 in zip(x_starts, y_starts):
+                # positioning
+                pylot.move_wait_xy_axes(plc, x0, y0)
+                time.sleep(5)
 
-            # diagonal movement with acquisition
-            print(f"v = {velocity:g} mm/s: ({x0}, {y0}) -> ({x0 + distance}, {y0 + distance})")
-            task.start()
-            time.sleep(2)
-            move_xy(plc, x0 + distance, y0 + distance)
-            dati = np.asarray(task.read(number_of_samples_per_channel=n_samples, timeout=duration + 5))
-            task.stop()
-            wait_for_movement_done(plc)
+                # diagonal movement with acquisition
+                print(f"v = {velocity:g} mm/s: ({x0}, {y0}) -> ({x0 + distance}, {y0 + distance})")
+                task.start()
+                time.sleep(2)
+                pylot.move_xy_axes(plc, x0 + distance, y0 + distance)
+                dati = np.asarray(task.read(number_of_samples_per_channel=n_samples, timeout=duration + 5))
+                task.stop()
+                pylot.wait_for_movement_done(plc)
 
-            t = np.arange(n_samples) / fs
-            np.savetxt(f"diag_v{velocity:g}_x{x0:g}_y{y0:g}_{stamp}.csv", np.column_stack((t, dati.T)), delimiter=",",
-                       header="time,board_x,board_y,board_z,bench_z", comments="")
-            risultati.append((velocity, x0, y0, t, dati))
+                t = np.arange(n_samples) / fs
+                np.savetxt(f"diag_v{velocity:g}_x{x0:g}_y{y0:g}_{stamp}.csv", np.column_stack((t, dati.T)), delimiter=",",
+                           header="time,board_x,board_y,board_z,bench_z", comments="")
+                risultati.append((velocity, x0, y0, t, dati))
 
-# moving back to mid-range position
-move_xy(plc, 300.0, 150.0)
-wait_for_movement_done(plc)
+    # moving back to mid-range position
+    pylot.move_home_xy_axes(plc)
 
-plc.close()
+finally:
+    plc.close()
 
 # plots: una figura per velocità, un riquadro per punto di partenza
 labels = ["board_x", "board_y", "board_z", "bench_z"]

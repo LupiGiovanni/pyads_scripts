@@ -13,7 +13,7 @@ I nomi sono stati cambiati il 14/11/2026 (quelle del 16/11 lo stesso giorno) con
 | **LS270** | Slitta lineare PI LS-270, asse **x** del banco, corsa provata 50–550 mm. Motore passo-passo 200 passi interi/giro, riduttore 5:1, vite a ricircolo di sfere passo 5 mm → 1 mm per giro motore, **5 µm per passo intero**. Morsetto Beckhoff **EL7047** in modalità velocità; anello di posizione chiuso nell'NC TwinCAT sull'encoder della slitta. |
 | **LS180** | Slitta lineare PI LS-180, asse **y** del banco, corsa provata 50–250 mm. Stessa trasmissione e stesso morsetto dell'LS270. |
 | **RS40** | Tavola rotante PI RS-40, versione con motore DC a spazzole. Riduttore 76:1 + vite senza fine 90:1 (6840:1). Drive **EL7342**, encoder 2048 cts/giro **sull'albero motore** letto da **EL5102** → risoluzione 0,026 m° (millesimi di grado). Specifiche PI: incremento minimo circa 5 m°, ripetibilità unidirezionale ±2,5 m°, bidirezionale circa 80 m°. |
-| **Banco XY** | Le due slitte insieme, con accelerometro triassiale sulla board e accelerometro monoassiale z sul banco (NI cDAQ-9189, Mod1 ai0–ai2, Mod2 ai0). |
+| **Banco XY** | Le due slitte insieme, con accelerometro triassiale sulla board e accelerometro monoassiale z sul banco. Acquisizione con NI cDAQ-9189 (Mod1 ai0–ai2, Mod2 ai0) fino al 3/11, con WebDAQ 504 dal 17/11. |
 
 Comunicazione: PLC Beckhoff via pyads (AMS NetId 5.36.211.100.1.1, porta 851; porta 500 per l'NC).
 
@@ -63,9 +63,10 @@ Comunicazione: PLC Beckhoff via pyads (AMS NetId 5.36.211.100.1.1, porta 851; po
 | Registrazione RS40 | `time`, `set_pos`, `actual_pos`, `following_error` | s dall'avvio, gradi; campioni ogni circa 9 ms |
 | Registrazione slitte | `time`, `set_pos`, `actual_pos`, `following_error` | s dall'avvio, mm; campioni ogni circa 11 ms |
 | Curva di velocità | `output_percent`, `actual_velo` | % di output del drive, velocità reale (`ActVelo`) in °/s per l'RS40 e in mm/s per le slitte |
-| Accelerometri (`diag_…`) | `time`, `board_x`, `board_y`, `board_z`, `bench_z` | s, m/s²; 6 kHz |
+| Accelerometri NI (`diag_…`) | `time`, `board_x`, `board_y`, `board_z`, `bench_z` | s, m/s²; 6 kHz |
+| Accelerometri WebDAQ (`accel_…`, `noise_…`) | `time`, `board_x`, `board_y`, `board_z`, `bench_z` | s dall'avvio dell'acquisizione; accelerazione nell'unità impostata nel job WebDAQ (presumibilmente g, da verificare); 25 600 Hz |
 
-**Script** (cartella superiore): `MIM_LS270.py` e `MIM_LS180.py` (scalette), `cumulative_error_LS270_LS180.py` (errore accumulato), `step_response_LS270.py` e `step_response_LS180.py` (gradino slitte, con temperature), `step_response_RS40.py` (gradino RS40), `record_RS40.py` e `record_LS270.py` (registrazione libera), `velocity_curve_RS40.py` e `velocity_curve_LS270.py` (curva di velocità), `diagonal_accel_test_LS270_LS180.py` (accelerometri), `speed_test.py` (velocità di lettura ADS).
+**Script** (cartella superiore): `MIM_LS270.py` e `MIM_LS180.py` (scalette), `cumulative_error_LS270_LS180.py` (errore accumulato), `step_response_LS270.py` e `step_response_LS180.py` (gradino slitte, con temperature), `step_response_RS40.py` (gradino RS40), `record_RS40.py` e `record_LS270.py` (registrazione libera), `velocity_curve_RS40.py` e `velocity_curve_LS270.py` (curva di velocità), `edoardo_accel_test.py` (accelerometri con NI, 3/11), `accel_test_LS270.py` e `accel_test_diagonal_LS180_LS270.py` (accelerometri con WebDAQ, 17/11), `speed_test.py` (velocità di lettura ADS).
 
 ---
 
@@ -220,7 +221,7 @@ La curva di velocità è misurata in **anello aperto** con `velocity_curve_RS40.
 
 **File**: `diag_v<velocità>_x<partenza x>_y<partenza y>_2026-11-03_16-32.csv`, 52 file.
 
-Le due slitte si muovono insieme in diagonale per 5 s, con acquisizione di 2 s prima, 5 s di movimento e 2 s dopo (9 s in totale, 6 kHz). Velocità: 4,0–10,0 mm/s a passi di 0,5 mm/s (13 valori). Partenze: (x, y) = (100, 50), (200, 100), (300, 150), (400, 200) mm. Avvio della serie alle 16:32 del 3/11 (tutti i file hanno nel nome l'ora di avvio). Script `diagonal_accel_test_LS270_LS180.py`. Analisi dell'8–9/11 con `analisi_vibrazioni.py` e `fft_bande.py` (cartella `claudio/`).
+Le due slitte si muovono insieme in diagonale per 5 s, con acquisizione di 2 s prima, 5 s di movimento e 2 s dopo (9 s in totale, 6 kHz). Velocità: 4,0–10,0 mm/s a passi di 0,5 mm/s (13 valori). Partenze: (x, y) = (100, 50), (200, 100), (300, 150), (400, 200) mm. Avvio della serie alle 16:32 del 3/11 (tutti i file hanno nel nome l'ora di avvio). Script `edoardo_accel_test.py`. Analisi dell'8–9/11 con `analisi_vibrazioni.py` e `fft_bande.py` (cartella `claudio/`).
 
 ## 9. Curve di velocità RS40 e LS270, registrazione LS270 (16/11)
 
@@ -242,3 +243,29 @@ Le due slitte si muovono insieme in diagonale per 5 s, con acquisizione di 2 s p
 | File | Nome originale | Ora | Cosa rappresenta |
 | --- | --- | --- | --- |
 | `LS270_curva-velocita_anelloAperto_output1-36pct_2026-11-16_13-42.csv` | `velocity_curve_LS270_2026-11-16_13-42.csv` | 13:42 | Output dall'1 % al 36 % a passi dell'1 % (prova fermata al 36 %) |
+
+## 10. Banco XY – vibrazioni con WebDAQ, asse X e diagonale (17/11)
+
+Le misure sono nelle sottocartelle `meas_LS270_17-11-2026/` e `meas_diag_17-11-2026/` e hanno i nomi dati dagli script (non rinominati).
+
+Acquisizione con WebDAQ 504: canali `board_x`, `board_y`, `board_z` (accelerometro triassiale sulla board) e `bench_z` (accelerometro sul banco), 25 600 Hz. Lo script avvia e ferma la schedule del WebDAQ via REST API e, dopo ogni stop, legge i campioni dalla memoria del WebDAQ e li salva in un CSV.
+
+Procedura comune:
+- velocità 4,0–10,0 mm/s a passi di 0,5 mm/s (13 valori), 4 partenze per velocità (52 file di movimento);
+- riposizionamento alla partenza a 8 mm/s, poi 2 s di attesa;
+- per ogni file: avvio dell'acquisizione, 3 s fermo, movimento di 3 s (corsa = 3 · v), 3 s fermo, stop;
+- all'inizio un file di rumore di fondo di 5 s a slitte ferme (`noise_…`).
+
+**Asse X (LS270)**: script `accel_test_LS270.py`, asse y fermo a metà corsa (150 mm). Partenze x = 100, 200, 300, 400 mm. Avvio della serie alle 14:20.
+
+| File | Cosa rappresenta |
+| --- | --- |
+| `meas_LS270_17-11-2026/noise_LS270_2026-11-17_14-20.csv` | Rumore di fondo, 5 s a slitte ferme |
+| `meas_LS270_17-11-2026/accel_LS270_v<velocità>_x<partenza x>_2026-11-17_14-20.csv` | 52 file: movimento dell'asse x a velocità `v` (mm/s) da `x` a `x + 3·v` mm |
+
+**Diagonale (LS270 + LS180)**: script `accel_test_diagonal_LS180_LS270.py`, le due slitte si muovono insieme della stessa corsa. Partenze (x, y) = (100, 50), (200, 100), (300, 150), (400, 200) mm; prima del rumore di fondo entrambi gli assi a metà corsa (300, 150). Avvio della serie alle 15:12.
+
+| File | Cosa rappresenta |
+| --- | --- |
+| `meas_diag_17-11-2026/noise_diag_2026-11-17_15-12.csv` | Rumore di fondo, 5 s a slitte ferme |
+| `meas_diag_17-11-2026/accel_diag_v<velocità>_x<partenza x>_y<partenza y>_2026-11-17_15-12.csv` | 52 file: movimento in diagonale a velocità `v` (mm/s) per asse, da (x, y) a (x + 3·v, y + 3·v) mm |
